@@ -20,8 +20,14 @@ wumpus world simulation -----  dml Fordham 2019
 Artificial Intelligence Final Project by Dino Becaj
 Began on 11/26/2020
 
-Summary: Currently, this agent selects an action randomly with the action() method. My goal here is to implement the model-checking approach 
-(truth-table enumeration-based entailment) as the means by which the agent estimates the probabilities of the outcomes of its actions.
+Summary: Currently, the base agent selects an action randomly with the action() method. My goal here is to implement the model-checking approach 
+(truth-table enumeration-based entailment) as the means by which the agent estimates the probabilities of the outcomes of its actions and then
+selects an action.
+
+Using truth-table enumeration, the agent will decide how safe it is in a given location. If there is a move that is 100% guaranteed as safe,
+the agent will make that move. If there is no guaranteed safe move, the agent will make the next safest move.
+
+self.map is the agent's knowledge base (KB) and is what will be used for entailment.
 """
 
 from random import randint
@@ -33,7 +39,7 @@ class WWAgent:
     def __init__(self):
         self.max=4 # number of cells in one side of square world
         self.stopTheAgent=False # set to true to stop th agent at end of episode
-        self.position = (0, 3) # top is (0,0)
+        self.position = (3, 0) # top is (0,0). The default was (0, 3), but I changed it so it would align with the actual simulation.
         self.directions=['up','right','down','left']
         self.facing = 'right'
         self.arrow = 1
@@ -58,14 +64,17 @@ class WWAgent:
     # when it moved
 
     def calculateNextPosition(self,action):
+        # I had to reverse the positions because in CS, the first number means the row and
+        # the second number means the column (row, column)
+        # I did this because the agent technically starts in (3, 0), not (0, 3)
         if self.facing=='up':
-            self.position = (self.position[0],max(0,self.position[1]-1))
+            self.position = (max(0,self.position[0]-1), self.position[1])
         elif self.facing =='down':
-            self.position = (self.position[0],min(self.max-1,self.position[1]+1))
+            self.position = (min(self.max-1,self.position[0]+1), self.position[1])
         elif self.facing =='right':
-            self.position = (min(self.max-1,self.position[0]+1),self.position[1])
+            self.position = (self.position[0], min(self.max-1, self.position[1]+1))
         elif self.facing =='left':
-            self.position = (max(0,self.position[0]-1),self.position[1])
+            self.position = (self.position[0], max(0,self.position[1]-1))
         return self.position
 
     # and the same is true for the direction the agent is facing, it also
@@ -127,6 +136,6 @@ class WWAgent:
                 action='right'
             # predict the effect of this
             self.calculateNextDirection(action)
-        print ("Random agent:",action, "-->",self.position[1],
-               self.position[0], self.facing)
+        print ("Random agent:",action, "-->",self.position[0],
+               self.position[1], self.facing)
         return action

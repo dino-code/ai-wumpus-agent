@@ -123,7 +123,18 @@ class Simulation:
                 self.percepts['room'+str(r)+str(c)] = (None, None, None, None, None)
 
     def agent_move(self, action):
-        
+        """
+
+        ***DELETE BEFORE SUBMISSION***
+
+        This is here for testing purposes --> reveals the agent's percepts as it navigates the environment
+
+        print("-"*20)
+        for i in self.agent.map:
+            print(i)
+        print("-"*20)
+
+        """
         if (action == 'exit'):
             self.endEpisode=True
             return
