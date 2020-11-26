@@ -1,0 +1,30 @@
+.. Wumpus World documentation master file, created by
+   sphinx-quickstart on Sun Mar 22 14:02:04 2015.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to Wumpus World's documentation!
+========================================
+Author: Greg Scott
+
+Project Introduction
+---------------------
+This project was built for the engineering design problem of Problem Set 2. Its requirements were to design a simulation of the game Wumpus World and create an artificially intelligent agent to interact in the simulation (known as a cave). The simulation consists of a pile of gold and a wumpus monster both randomly and uniformly located in one of the rooms of the simulation. Pits are randomly located throughout the rooms as well with a probability of a .2 chance being in a room. The agents goal is to find the gold, pick it up, and climb out of the cave safely with it. If the agent encounters a room with the wumpus or a pit, it dies. The agent is given one arrow to kill the wumpus if needed. Performance measures include: +1000 for leaving with gold, -1000 for dying, -10 for using arrow, -1 for each move processed.
+
+Contents:
+---------
+
+.. toctree::
+   :maxdepth: 2
+
+   design
+   code
+   results
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+

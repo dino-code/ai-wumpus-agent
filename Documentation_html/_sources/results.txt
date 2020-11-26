@@ -1,0 +1,15 @@
+Typical Results
+===============
+Typically the agent does pretty well at avoiding danger until it can find the gold. Obviously there are some scenarios that come down to luck and others that are impossible for it to do well. In most of the playable scenarios however, the agent is successful at achieving positive points.
+
+The only downfall of the agent is its lack of speed in its decision making.
+
+
+Changes I Would Make With More Time
+===================================
+The biggest change I would make in my program given more time would be to improve the speed of my agent's
+thought process. I am not sure whether to attribute its delay in making a move a times to accessing the
+knowledge base or creating a new plan. With more time I would look into a way to make this more efficient
+to reduce delay in the simulation. I would also look into a way to reduce the total amount of moves made
+while still aquiring the same amount of information. My agent covers as much area as possible to increase its
+knowledge of the environment but I am sure there is a more efficient way to do it.

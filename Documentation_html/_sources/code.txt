@@ -1,0 +1,100 @@
+The Code Explained
+==================
+Methods listed before any classes are listed are in the file but not affiliated to a specific class.
+Methods listed after a class are defined in that class.
+
+wwsim.py (The Simulation)
+-------------------------
+
+The simulation file is the main driver file for the entire program. It reads the command-line call with arguments and runs the program accordingly. If the command arg is -gui, it runs the gui version of the program in a Tkinter loop. For the nongui version it runs through a while loop until the game ends, printing to stdout. A -help arg is also provided to inform the user about how to properly run a command.
+
+.. class:: Simulation
+
+   This class represents a Wumpus World game simulation. When an instance is created, the program stats start at all of the start values. The class handles creating/resetting simulations and interaction from an agent.
+
+.. method:: set_percepts(self, r, c, item)
+
+   This method sets percepts of a given room or its neighbors based upon its location and the item located in it.
+
+.. method:: generate_simulation(self)
+
+   This method generates a simulation by randomly assigning wumpus, gold, and pit locations.
+
+.. method:: reset_stats(self, newScore)
+
+   This method resets all of the variables (stats) of the simulation back to their starting values.
+
+.. method:: agent_move(self, action)
+
+   This method updates the simulation and its stats based upon a given action (usually from the agent).  
+
+.. method:: terminal_test(self)
+
+   This method returns if the simulation has ended or not. The simulation ends when either the agent dies or climbs out of the cave.
+   
+.. method:: update_score(self)
+
+   This method updates the agent's performance each time it is called based upon the major events such as dying or climbing out with the gold.
+   
+.. method:: move(self)
+
+   This method updates the agent with the current percepts, asks for an action, and the applies that action with the method agent_move.
+
+.. class:: Display
+
+   This class represents the gui for the simulation using Tkinter. It has methods for creating/updating/resetting the display.
+
+.. method:: set_room(self, r, c, sim)
+
+   A helper function that returns the image of the given room based upon its location and the state of the simulation.
+
+.. method:: update_move(self, sim)
+
+   Updates the display of the simulation based upon its current state.
+
+.. method:: reset_display(self, sim)
+
+   Resets the display's buttons and images to their starting state. 
+
+wwagent.py (The Agent)
+----------------------
+
+.. method:: get_neighbors(r, c)
+
+   Returns a list of the neighbors of position (r, c).
+   
+.. class:: WWKB
+
+   This class represents a Wumpus World knowledge base for the agent. Initially the knowledge base knows that there is no pit or wumpus in the starting position, the inferences between breeze, pit, stench, wumpus, and the fact that there is only one wumpus in the simulation. All sentences are stored as expr() from the logic.py file.
+   
+.. method:: tell(self, sentence)
+
+   The method for telling the database a certain expression.
+   
+.. method:: ask(self, sentence)
+
+   Returns if the given expression is satisfiable.
+   
+.. class:: WWAgent
+
+   This class represents the agent. The agent has a knowledge base and multiple variables represeting his memory and current knowledge of his state.
+   
+.. method:: update(self, percept)
+
+   Public method to update the agent with the current percepts of the simulation.
+   
+.. method:: update_stats(self, pastAction)
+
+   A helper method for updating specific variables (stats) of the agent given the past action.
+   
+.. method:: create_plan(self, goal)
+
+   A method that, given a set goal room in the simulation, finds a path to that goal, and develops a plan (list of actions) to get there.
+   
+.. method:: neighbors(x, y, n)
+
+   A helper method inside of the create_plan method that returns a list of visited neighbors that are not already in the path n.
+   
+.. method:: action(self)
+
+   This is the public method called by the simulation to determine the agent's next action depending upon its current knowledge and understanding of the world around it. The method first calls update_stats and then updates its knowledge base with information about its current position if it has not already visited it. It then decides an action, either dependant on the current percepts or taken from its current plan. If it does not have a plan, it creates one calling the create_plan method and returns an action from that plan.

@@ -1,0 +1,72 @@
+How it Works/Design Choices
+===========================
+How it Works
+------------
+
+This Wumpus World Simulation has two implementations. It is either run with a GUI via Tkinter interface or run without one
+with a representation printed to stdout.  In both versions, the underlying simulation is run the same. Only the representation
+of the current state and results is displayed differently.  
+
+The Exterior:
+
+GUI - When the command "python wwsim.py -gui" is run, a window is displayed with a representation of the Wumpus World and current
+states displayed on the side. Percepts are listed under the board. The user can see the locations of all of the items in this new
+simulation but the agent cannot. With each click of the button the agent calculates and performs a move. Its performance score is
+kept in the upper right corner of the window. The user can choose to reset the simulation at any time, however, this will create 
+a new simulation each time. When the game ends, the "Move" button disappears and the user is only left with the option to reset.
+
+Non-GUI - When the command "python wwagent.py -nongui" is run, the program loops through an entire game of agent moves and prints
+out a representation of each move to stdout. Each move is printed along with the agent's location, performance, orientation, 
+arrow-status, percepts, gold-status, the wumpus-location, pit locations, and the gold location. To run a new simulation you must
+call the command again.
+
+The Interior:
+
+When a simulation is created, it sets all game states to their starting value and creates a new game scenario by randomly assigning
+locations to the items of the world (wumpus, pits, gold, and agent). Whenever a move is made, a method in the driver part of the 
+program updates the agent with the current percepts and asks for an action. Based upon this action, the simulation updates its
+states and, if the agents moves locations, provides the new percepts. The update function for the simulation is basically a list of
+conditions depending on the given action. For example, if the action is 'shoot' it will decrement the agent an arrow. 
+If the action is 'move' it will check to make sure the agent can move the direction it is facing otherwise it will produce a 'bump'
+percept. The simulation is the foundation of the program because it creates the whole game, updates its states, and checks to see if the game is over.
+
+The agent class only has to operate providing an action from the agent for the simulation given a set of percepts. The agent however is
+artificially intelligent so it has a knowledge base for storing memory of information about its past locations and uses logic to make
+inferences based upon this information. Therefore its main function is action(). This method works by first updating the agent's stats
+based upon its previous action. Then, if it has not previously visited its current location, it will tell its knowledge base the current
+percepts. Next it updates its understanding of safe spaces and dangerous spaces in the world. The agent asks its knowledge base about the
+spaces adjacent to its location that it has not visited. If the knowledge base determines a space is safe or dangerous, the agent will add
+it to either its lists of safe/dangerous spaces respectively. Otherwise it will add it to its unsure list. The agent uses this information
+determinding a goal to create a planned path towards. It first checks the safe list, then the unsure list, and then the dangerous list. The
+create a plan method is given a location from one of these lists and develops a list of actions to get to that goal.
+
+The agent now makes a decision on an action to return. For example, if there is a 'glitter' in its current location and it does not have the gold yet, the
+action is 'grab'. If the decision comes down to an action from the agent's plan and it has no plan it will create one. Otherwise it will return the next
+action in its plan. Once the action is determined and return (to the simulation) the game moves on.
+
+The simulation has a terminal_test method that returns whether the game has ended. It will return true if either the agent climbs out of the
+cave, or if it dies.
+
+Design Choices
+--------------
+Designing the simulation was a straight-forward process. It just had to meet the requirements of the Wumpus World simulation. For the visual
+ aspect of the sim, I used Tkinter and images built in paint to represent the Wumpus World environment and simulation states. In the main
+ implementation of the game, only two buttons are available: "Move" and "Reset". When the game ends, the "Move" button is hidden forcing the
+ user to reset the simulation.
+ 
+The major design choices came with the development of the agent. I based my implementation off of a pseudo algorithm similar to the hybrid agent
+from the book. The most difficult part of the project for me was creating the knowledge base. I looked at the code from the book for inspiration but ended up 
+creating my own class for it. I did however use the expr() method from the logic.py file for storing my logic sentences. The knowledge base I created is
+specific to the Wumpus World so when instantiated, it has knowledge of all of the specific rules of that environment. The second most difficult part of the project
+was the design of my agent's create a plan method. The agent takes in its percepts and adds what it learns to its knowledge. Then it categorizes neighboring rooms 
+as either safe, not safe, or unsure. When picking a next goal, I make sure that the agent only picks from safe rooms or unsure rooms if no safe rooms are available.
+If the only rooms left to explore are not safe, the agent will just leave the cave. These qualities make my agent's risk level very moderate. It takes risks when 
+making decisions with unsure rooms, but it will leave if it thinks there is no possibility to get the gold.
+
+Once I had the agent's movement under consistent control, I went ahead and added some features for the arrow. When the simulation starts, the agent
+is facing right and its first move is to "move". I added a feature however where if the agent notices a stench in the starting room, its first
+move is to "shoot". I did this because the agent starts in a corner so the wumpus has a 50% chance of being in the room to the right. Whether the
+wumpus is in that room or not, the agent now knows that that room is safe (from the wumpus) to travel in. The next feature I added was based on an
+observation I made watching my agent perform numerous times. The most times the wumpus would eat him were when the agent was unsure about the rooms safety
+but made it a goal nonetheless. Now when the agent is headed for an unsure room, if it senses a stench just before its final move into the room, it shoots an arrow.
+Whether the wumpus is in that room or not it increases the rooms probability of being safe.

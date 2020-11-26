@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Code Explained &mdash; Wumpus World 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wumpus World 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Typical Results" href="results.html" />
+    <link rel="prev" title="How it Works/Design Choices" href="design.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="results.html" title="Typical Results"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="How it Works/Design Choices"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Wumpus World 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="the-code-explained">
+<h1>The Code Explained<a class="headerlink" href="#the-code-explained" title="Permalink to this headline">¶</a></h1>
+<p>Methods listed before any classes are listed are in the file but not affiliated to a specific class.
+Methods listed after a class are defined in that class.</p>
+<div class="section" id="wwsim-py-the-simulation">
+<h2>wwsim.py (The Simulation)<a class="headerlink" href="#wwsim-py-the-simulation" title="Permalink to this headline">¶</a></h2>
+<p>The simulation file is the main driver file for the entire program. It reads the command-line call with arguments and runs the program accordingly. If the command arg is -gui, it runs the gui version of the program in a Tkinter loop. For the nongui version it runs through a while loop until the game ends, printing to stdout. A -help arg is also provided to inform the user about how to properly run a command.</p>
+<dl class="class">
+<dt id="Simulation">
+<em class="property">class </em><tt class="descname">Simulation</tt><a class="headerlink" href="#Simulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a Wumpus World game simulation. When an instance is created, the program stats start at all of the start values. The class handles creating/resetting simulations and interaction from an agent.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="set_percepts">
+<tt class="descname">set_percepts</tt><big>(</big><em>self</em>, <em>r</em>, <em>c</em>, <em>item</em><big>)</big><a class="headerlink" href="#set_percepts" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method sets percepts of a given room or its neighbors based upon its location and the item located in it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="generate_simulation">
+<tt class="descname">generate_simulation</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#generate_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method generates a simulation by randomly assigning wumpus, gold, and pit locations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reset_stats">
+<tt class="descname">reset_stats</tt><big>(</big><em>self</em>, <em>newScore</em><big>)</big><a class="headerlink" href="#reset_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method resets all of the variables (stats) of the simulation back to their starting values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="agent_move">
+<tt class="descname">agent_move</tt><big>(</big><em>self</em>, <em>action</em><big>)</big><a class="headerlink" href="#agent_move" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method updates the simulation and its stats based upon a given action (usually from the agent).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="terminal_test">
+<tt class="descname">terminal_test</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#terminal_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method returns if the simulation has ended or not. The simulation ends when either the agent dies or climbs out of the cave.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="update_score">
+<tt class="descname">update_score</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#update_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method updates the agent&#8217;s performance each time it is called based upon the major events such as dying or climbing out with the gold.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="move">
+<tt class="descname">move</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#move" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method updates the agent with the current percepts, asks for an action, and the applies that action with the method agent_move.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Display">
+<em class="property">class </em><tt class="descname">Display</tt><a class="headerlink" href="#Display" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents the gui for the simulation using Tkinter. It has methods for creating/updating/resetting the display.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="set_room">
+<tt class="descname">set_room</tt><big>(</big><em>self</em>, <em>r</em>, <em>c</em>, <em>sim</em><big>)</big><a class="headerlink" href="#set_room" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper function that returns the image of the given room based upon its location and the state of the simulation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="update_move">
+<tt class="descname">update_move</tt><big>(</big><em>self</em>, <em>sim</em><big>)</big><a class="headerlink" href="#update_move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the display of the simulation based upon its current state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reset_display">
+<tt class="descname">reset_display</tt><big>(</big><em>self</em>, <em>sim</em><big>)</big><a class="headerlink" href="#reset_display" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the display&#8217;s buttons and images to their starting state.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="wwagent-py-the-agent">
+<h2>wwagent.py (The Agent)<a class="headerlink" href="#wwagent-py-the-agent" title="Permalink to this headline">¶</a></h2>
+<dl class="method">
+<dt id="get_neighbors">
+<tt class="descname">get_neighbors</tt><big>(</big><em>r</em>, <em>c</em><big>)</big><a class="headerlink" href="#get_neighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of the neighbors of position (r, c).</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="WWKB">
+<em class="property">class </em><tt class="descname">WWKB</tt><a class="headerlink" href="#WWKB" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a Wumpus World knowledge base for the agent. Initially the knowledge base knows that there is no pit or wumpus in the starting position, the inferences between breeze, pit, stench, wumpus, and the fact that there is only one wumpus in the simulation. All sentences are stored as expr() from the logic.py file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tell">
+<tt class="descname">tell</tt><big>(</big><em>self</em>, <em>sentence</em><big>)</big><a class="headerlink" href="#tell" title="Permalink to this definition">¶</a></dt>
+<dd><p>The method for telling the database a certain expression.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ask">
+<tt class="descname">ask</tt><big>(</big><em>self</em>, <em>sentence</em><big>)</big><a class="headerlink" href="#ask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns if the given expression is satisfiable.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="WWAgent">
+<em class="property">class </em><tt class="descname">WWAgent</tt><a class="headerlink" href="#WWAgent" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents the agent. The agent has a knowledge base and multiple variables represeting his memory and current knowledge of his state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="update">
+<tt class="descname">update</tt><big>(</big><em>self</em>, <em>percept</em><big>)</big><a class="headerlink" href="#update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Public method to update the agent with the current percepts of the simulation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="update_stats">
+<tt class="descname">update_stats</tt><big>(</big><em>self</em>, <em>pastAction</em><big>)</big><a class="headerlink" href="#update_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper method for updating specific variables (stats) of the agent given the past action.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="create_plan">
+<tt class="descname">create_plan</tt><big>(</big><em>self</em>, <em>goal</em><big>)</big><a class="headerlink" href="#create_plan" title="Permalink to this definition">¶</a></dt>
+<dd><p>A method that, given a set goal room in the simulation, finds a path to that goal, and develops a plan (list of actions) to get there.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neighbors">
+<tt class="descname">neighbors</tt><big>(</big><em>x</em>, <em>y</em>, <em>n</em><big>)</big><a class="headerlink" href="#neighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper method inside of the create_plan method that returns a list of visited neighbors that are not already in the path n.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="action">
+<tt class="descname">action</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#action" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the public method called by the simulation to determine the agent&#8217;s next action depending upon its current knowledge and understanding of the world around it. The method first calls update_stats and then updates its knowledge base with information about its current position if it has not already visited it. It then decides an action, either dependant on the current percepts or taken from its current plan. If it does not have a plan, it creates one calling the create_plan method and returns an action from that plan.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The Code Explained</a><ul>
+<li><a class="reference internal" href="#wwsim-py-the-simulation">wwsim.py (The Simulation)</a></li>
+<li><a class="reference internal" href="#wwagent-py-the-agent">wwagent.py (The Agent)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="design.html"
+                        title="previous chapter">How it Works/Design Choices</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="results.html"
+                        title="next chapter">Typical Results</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/code.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="results.html" title="Typical Results"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="How it Works/Design Choices"
+             >previous</a> |</li>
+        <li><a href="index.html">Wumpus World 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Greg Scott.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
