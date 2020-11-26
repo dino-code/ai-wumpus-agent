@@ -19,6 +19,9 @@ wumpus world simulation -----  dml Fordham 2019
 """
 Artificial Intelligence Final Project by Dino Becaj
 Began on 11/26/2020
+
+Summary: Currently, this agent selects an action randomly with the action() method. My goal here is to implement the model-checking approach 
+(truth-table enumeration-based entailment) as the means by which the agent estimates the probabilities of the outcomes of its actions.
 """
 
 from random import randint
