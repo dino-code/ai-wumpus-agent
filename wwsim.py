@@ -84,7 +84,7 @@ class Simulation:
 
     def generate_simulation(self):
         # Set wumpus location
-        self.wumpusLoc = (randint(0, 3), randint(0, 3))
+        self.wumpusLoc = (randint(0, 3), randint(0, 3))                             # this means that P(Wumpus) = 1/15
         while (self.wumpusLoc == (3, 0)):
             self.wumpusLoc = (randint(0, 3), randint(0, 3))
         # Set wumpus percepts
@@ -98,7 +98,7 @@ class Simulation:
         # Generate pits
         for r in range(self.rowSize):
             for c in range(self.colSize):
-                if (randint(1, 5) == 3) and ((r != 3) or (c != 0)):
+                if (randint(1, 5) == 3) and ((r != 3) or (c != 0)):                 # this means P(Pit) = 1/5 for all squares but the start square
                     self.pits['room'+str(r)+str(c)] = True
                     # Set pit percepts
                     self.set_percepts(r, c, 'pit')
