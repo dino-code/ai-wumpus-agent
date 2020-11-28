@@ -30,6 +30,7 @@ the agent will make that move. If there is no guaranteed safe move, the agent wi
 self.map is the agent's knowledge base (KB) and is what will be used for entailment.
 """
 
+from itertools import product # used to enumerate pit, wumpus, and gold configurations
 from random import randint
 
 # This is the class that represents an agent
@@ -43,7 +44,7 @@ class WWAgent:
         self.directions=['up','right','down','left']
         self.facing = 'right'
         self.arrow = 1
-        self.frontier = [((3, 1), 0, 0), ((2, 0), 0, 0)] # ((row, col), hasPit, hasWumpus). The 2 default frontier elements will always be the case
+        self.frontier = [((3, 1), 0, 0), ((2, 0), 0, 0)] # ((row, col), hasPit, hasWumpus, hasGold). The 2 default frontier elements will always be the case
         self.known = [((3,0), 0, 0)] # all the squares appended to this list will have values of 0 (otherwise the game would end).
         self.percepts = (None, None, None, None, None)
         self.map = [[ self.percepts for i in range(self.max) ] for j in range(self.max)]
@@ -109,9 +110,20 @@ class WWAgent:
             else:
                 self.facing = 'up'
 
+    # de
+    def calculateProbabilities(self):
+        fron = self.frontier
+        probabilities = {}      # this dict contains the probability of a pit for each square
+
+
+        for query in self.frontier:
+            fron.pop(fron.index(query)) # remove the query from the frontier
+
+            models = enumerateModels(fron)
+
+    
     # this function finds the squares adjacent to the current square
     # and appends them to self.frontier
-
     def updateFrontier(self):
         temp = []
 
@@ -188,3 +200,29 @@ class WWAgent:
         print ("Random agent:",action, "-->",self.position[0],
                self.position[1], self.facing)
         return action
+
+
+# this function enumerates all the possibilities of the frontier.
+# In other words, it will generate all the possible configurations
+# of the squares within the frontier.
+def enumerateModels(frontier):
+    model_list = []
+
+    enums = product([1, 0], len(frontier)*2) # this will produce 2^(len(frontier)*2) models
+
+    for enum in enums:
+        model = []
+        pos = 0
+        for square in frontier:
+
+
+    '''
+    For a frontier with 2 squares, each element of enums will have 4 configurations slots
+    each containing a 1 or 0. For example, a possible configuration is: [0, 1, 1, 1].
+    The way to interpret this is that the first 2 numbers correspond to the following 
+    values for the first square in frontier (hasPit, hasWumpus) and the last 2
+    correspond to the respective values for the second square.
+    '''
+
+
+    return mods
