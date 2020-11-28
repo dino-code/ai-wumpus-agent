@@ -210,11 +210,13 @@ def enumerateModels(frontier):
 
     enums = product([1, 0], len(frontier)*2) # this will produce 2^(len(frontier)*2) models
 
-    for enum in enums:
+    for enum in enums:  # for each model configuration
         model = []
         pos = 0
         for square in frontier:
-
+            model.append(square[0], enum[pos], enum[pos+1]) # append the generated hasPit and hasWumpus
+            pos = pos+2                                     # increment pos by 2
+        model_list.append(model)                            # append the model to the model list
 
     '''
     For a frontier with 2 squares, each element of enums will have 4 configurations slots
@@ -224,5 +226,4 @@ def enumerateModels(frontier):
     correspond to the respective values for the second square.
     '''
 
-
-    return mods
+    return model_list
