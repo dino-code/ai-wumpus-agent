@@ -118,11 +118,12 @@ class WWAgent:
         # first, we must remove values from the frontier if
         # we have visited them already (because then they)
         # are no longer in the frontier
+        
         duplicates = [i for i in self.frontier if i in self.known]
 
         for duplicate in duplicates:
             self.frontier.pop(self.frontier.index(duplicate)) # remove visited squares from frontier
-
+        
         above = (self.position[0]+1, self.position[1])
         below = (self.position[0]-1, self.position[1])
         left = (self.position[0], self.position[1]-1)
@@ -165,17 +166,17 @@ class WWAgent:
             self.stopTheAgent=True
             return 'grab'
         
-        # the frontier is updated here and then we check
-        # what the best move should be based on the new
-        # frontier
-        self.updateFrontier()
-        
         # choose a random direction, and move          
         actionSelection = randint(0,1)
         if actionSelection>0: # there is an 50% chance of moving forward 
             action = 'move'
             # predict the effect of this
             self.calculateNextPosition(action)
+
+            # the frontier is updated here and then we check
+            # what the best move should be based on the new
+            # frontier
+            self.updateFrontier() # we only update frontier if the action is a move action
         else: # pick left or right 50%
             actionSelection=randint(0,1)
             if actionSelection>0:
