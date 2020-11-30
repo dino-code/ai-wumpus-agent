@@ -45,8 +45,8 @@ class WWAgent:
         self.directions=['up','right','down','left']
         self.facing = 'right'
         self.arrow = 1
-        self.frontier = [((3, 1), 0, 0), ((2, 0), 0, 0)] # ((row, col), hasPit, hasWumpus). The 2 default frontier elements will always be the case
-        self.known = [((3,0), 0, 0)] # all the squares appended to this list will have values of 0 (otherwise the game would end).
+        self.frontier = [((3, 1), False, False), ((2, 0), False, False)] # ((row, col), hasPit, hasWumpus). The 2 default frontier elements will always be the case
+        self.known = [((3,0), False, False)] # all the squares appended to this list will have values of False (otherwise the game would end).
         self.percepts = (None, None, None, None, None)
         self.map = [[ self.percepts for i in range(self.max) ] for j in range(self.max)]
         self.probabilities = {}
@@ -88,8 +88,8 @@ class WWAgent:
         elif self.facing =='left':
             self.position = (self.position[0], max(0,self.position[1]-1))
         
-        if (self.position, 0, 0) not in self.known:
-                self.known.append((self.position, 0, 0)) # append the new position to known positions
+        if (self.position, False, False) not in self.known:
+                self.known.append((self.position, False, False)) # append the new position to known positions
 
         return self.position
 
@@ -138,22 +138,22 @@ class WWAgent:
             left_query = (query[0][0], query[0][1]-1)
             right_query = (query[0][0], query[0][1]+1)
 
-            if (above_query, 0, 0) in self.known:
+            if (above_query, False, False) in self.known:
                 query_adjacents_in_known.append(above_query)
-            if (below_query, 0, 0) in self.known:
+            if (below_query, False, False) in self.known:
                 query_adjacents_in_known.append(below_query)
-            if (left_query, 0, 0) in self.known:
+            if (left_query, False, False) in self.known:
                 query_adjacents_in_known.append(left_query)
-            if (right_query, 0, 0) in self.known:
+            if (right_query, False, False) in self.known:
                 query_adjacents_in_known.append(right_query)
 
             # within each model
             for model in models:
                 bad = False
-                # if ((row, col), 1, 0) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
-                # if ((row, col), 0, 1) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
-                # if ((row, col), 0, 0) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
-                # if ((row, col), 1, 1) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
+                # if ((row, col), True, False) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
+                # if ((row, col), False, True) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
+                # if ((row, col), False, False) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
+                # if ((row, col), True, True) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
                 for square in model:
                     # find all known squares adjacent to a square in the model. If any of these known squares contradicts a model, then the model must be false
                     # for example, if our model says (2, 1) has a pit, but we have visited (2, 0) and seen that there is no breeze, then there is no way that
@@ -166,20 +166,20 @@ class WWAgent:
 
                     model_adjacents_in_known = [] # list of the squares we will have to check for breezes and stenches
 
-                    if (above, 0, 0) in self.known:
+                    if (above, False, False) in self.known:
                         model_adjacents_in_known.append(above)
-                    if (below, 0, 0) in self.known:
+                    if (below, False, False) in self.known:
                         model_adjacents_in_known.append(below)
-                    if (left, 0, 0) in self.known:
+                    if (left, False, False) in self.known:
                         model_adjacents_in_known.append(left)
-                    if (right, 0, 0) in self.known:
+                    if (right, False, False) in self.known:
                         model_adjacents_in_known.append(right)
                     
                     # now we iterate through sensor data to find whether there is are breezes or stenches in squares adjacent to the square in question
                     for adjacent in model_adjacents_in_known:
                         percept = self.map[adjacent[0]][adjacent[1]]
 
-                        condition = (square[1] == 0 and 'breeze' in percept) or (square[1] == 1 and 'breeze' not in percept) or (square[2] == 0 and 'stench' in percept) or (square[2] == 1 and 'stench' not in percept)
+                        condition = (square[1] == False and 'breeze' in percept) or (square[1] == True and 'breeze' not in percept) or (square[2] == False and 'stench' in percept) or (square[2] == True and 'stench' not in percept)
 
                         if condition:
                             # this if statement checks for the case where the model has a pit, but no breeze in an adjacent square or if the 
@@ -190,7 +190,7 @@ class WWAgent:
                     for adjacent in query_adjacents_in_known:
                         percept = self.map[adjacent[0]][adjacent[1]]
 
-                        condition = (query[1] == 0 and 'breeze' in percept) or (query[1] == 1 and 'breeze' not in percept) or (query[2] == 0 and 'stench' in query) or (query[2] == 1 and 'stench' not in percept)
+                        condition = (query[1] == False and 'breeze' in percept) or (query[1] == True and 'breeze' not in percept) or (query[2] == False and 'stench' in query) or (query[2] == True and 'stench' not in percept)
 
                         if condition:
                             # this if statement checks for the case where the model has a pit, but no breeze in an adjacent square or if the 
@@ -203,20 +203,20 @@ class WWAgent:
 
                     model_adjacents_in_known = [] # list of the squares we will have to check for breezes and stenches
 
-                    if (above, 0, 0) in self.known:
+                    if (above, False, False) in self.known:
                         model_adjacents_in_known.append(above)
-                    if (below, 0, 0) in self.known:
+                    if (below, False, False) in self.known:
                         model_adjacents_in_known.append(below)
-                    if (left, 0, 0) in self.known:
+                    if (left, False, False) in self.known:
                         model_adjacents_in_known.append(left)
-                    if (right, 0, 0) in self.known:
+                    if (right, False, False) in self.known:
                         model_adjacents_in_known.append(right)
                     
                     # now we iterate through sensor data to find whether there is are breezes or stenches in squares adjacent to the square in question
                     for adjacent in model_adjacents_in_known:
                         percept = self.map[adjacent[0]][adjacent[1]]
 
-                        if (square[1] == 0 and 'breeze' in percept) or (square[1] == 1 and 'breeze' not in percept) or (square[2] == 0 and 'stench' in percept) or (square[2] == 1 and 'stench' not in percept):
+                        if (square[1] == False and 'breeze' in percept) or (square[1] == True and 'breeze' not in percept) or (square[2] == False and 'stench' in percept) or (square[2] == True and 'stench' not in percept):
                             # this if statement checks for the case where the model has a pit, but no breeze in an adjacent square or if the 
                             # model has a Wumpus, but no stench in adjacent squares
                             # if this is the case, we invalidate the model
@@ -230,10 +230,10 @@ class WWAgent:
     def calculateProbabilities(self):
         '''
         here we need to remember that there are 4 variants of each query
-        if ((row, col), 1, 0) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
-        if ((row, col), 1, 1) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
-        if ((row, col), 0, 1) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
-        if ((row, col), 0, 0) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
+        if ((row, col), True, False) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
+        if ((row, col), True, True) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
+        if ((row, col), False, True) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
+        if ((row, col), False, False) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
         '''
         fron = copy.deepcopy(self.frontier)
         probabilities = {}      # this dict contains the probability of a pit for each square
@@ -241,7 +241,7 @@ class WWAgent:
         print("Queries and valid models:")
         for query in self.frontier:
             fron.pop(fron.index(query)) # remove the query from the frontier
-            query_variants = [(query[0], 1, 0), (query[0], 1, 1), (query[0], 0, 1), (query[0], 0, 0)] # each of these impacts the probability calculation
+            query_variants = [(query[0], True, False), (query[0], True, True), (query[0], False, True), (query[0], False, False)] # each of these impacts the probability calculation
 
             models = enumerateModels(fron)  # model enumeration
             fron.append(query)
@@ -258,15 +258,15 @@ class WWAgent:
             # that are possible given the observations (model-checking)
 
     def probabilityFormula(self, query, validModels):
-        hasPit = (query[0], 1, 0)
-        noPit = (query[0], 0, 0)
+        hasPit = (query[0], True, False)
+        noPit = (query[0], False, False)
 
         probability = {}
 
         prob = 0
         
         for square in validModels:
-            if square[0][1] == 1:
+            if square[0][1] == True:
                 prob += 0.2
             else:
                 prob += 0.8
@@ -274,7 +274,7 @@ class WWAgent:
 
         prob = 0
         for square in validModels:
-            if square[0][1] == 1:
+            if square[0][1] == True:
                 prob += 0.2
             else:
                 prob += 0.8
@@ -318,8 +318,8 @@ class WWAgent:
         # the adjacent squares are not already in the frontier
         # and haven't already been visited
         for square in temp:
-            if (square, 0, 0) not in self.frontier and (square, 0, 0) not in self.known:
-                self.frontier.append((square, 0, 0))
+            if (square, False, False) not in self.frontier and (square, False, False) not in self.known:
+                self.frontier.append((square, False, False))
 
     # this is the function that will pick the next action of
     # the agent. This is the main function that needs to be
@@ -365,7 +365,7 @@ class WWAgent:
 def enumerateModels(frontier):
     model_list = []
 
-    model_configs = product([1, 0], repeat=len(frontier)*2) # this will produce 2^(len(frontier)*2) models
+    model_configs = product([True, False], repeat=len(frontier)*2) # this will produce 2^(len(frontier)*2) models
 
     for model_config in model_configs:  # for each model configuration
         model = []
@@ -377,7 +377,7 @@ def enumerateModels(frontier):
 
     '''
     For a frontier with 2 squares, each element of enums will have 4 configurations slots
-    each containing a 1 or 0. For example, a possible configuration is: [0, 1, 1, 1].
+    each containing a True or False. For example, a possible configuration is: [False, True, True, True].
     The way to interpret this is that the first 2 numbers correspond to the following 
     values for the first square in frontier (hasPit, hasWumpus) and the last 2
     correspond to the respective values for the second square.
