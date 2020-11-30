@@ -31,6 +31,7 @@ self.map is the agent's knowledge base (KB) and is what will be used for entailm
 """
 
 from itertools import product # used to enumerate pit, wumpus, and gold configurations
+import copy
 from random import randint
 
 # This is the class that represents an agent
@@ -44,10 +45,12 @@ class WWAgent:
         self.directions=['up','right','down','left']
         self.facing = 'right'
         self.arrow = 1
-        self.frontier = [((3, 1), 0, 0), ((2, 0), 0, 0)] # ((row, col), hasPit, hasWumpus, hasGold). The 2 default frontier elements will always be the case
+        self.frontier = [((3, 1), 0, 0), ((2, 0), 0, 0)] # ((row, col), hasPit, hasWumpus). The 2 default frontier elements will always be the case
         self.known = [((3,0), 0, 0)] # all the squares appended to this list will have values of 0 (otherwise the game would end).
         self.percepts = (None, None, None, None, None)
         self.map = [[ self.percepts for i in range(self.max) ] for j in range(self.max)]
+        self.probabilities = {}
+        self.models = []
         print("New agent created")
 
     # Add the latest percepts to list of percepts received so far
@@ -60,6 +63,12 @@ class WWAgent:
         #[stench, breeze, glitter, bump, scream]
         if self.position[0] in range(self.max) and self.position[1] in range(self.max):
             self.map[ self.position[0]][self.position[1]]=self.percepts
+        self.updateFrontier()
+        print("-"*40)                                                                                           # ************************
+        print("frontier:", self.frontier)
+        print("-"*40)
+        self.calculateProbabilities()
+
         # puts the percept at the spot in the map where sensed
 
     # Since there is no percept for location, the agent has to predict
@@ -110,18 +119,170 @@ class WWAgent:
             else:
                 self.facing = 'up'
 
-    # de
+    # check generated models using the sensor data.
+    # Returns valid models (that will then be used in
+    # the calculation of probabilities for pits and 
+    # wumpuses)
+    def checkModels(self, query_variants, models):
+        valid_models_dict = {}  # key=query variant, value=models where this variant is valid
+                                # this will be used later when calculating probabilities
+
+        # for each query variant
+        for query in query_variants:
+            valid_models_dict[query] = []
+
+            query_adjacents_in_known = []
+
+            above_query = (query[0][0]-1, query[0][1])
+            below_query = (query[0][0]+1, query[0][1])
+            left_query = (query[0][0], query[0][1]-1)
+            right_query = (query[0][0], query[0][1]+1)
+
+            if (above_query, 0, 0) in self.known:
+                query_adjacents_in_known.append(above_query)
+            if (below_query, 0, 0) in self.known:
+                query_adjacents_in_known.append(below_query)
+            if (left_query, 0, 0) in self.known:
+                query_adjacents_in_known.append(left_query)
+            if (right_query, 0, 0) in self.known:
+                query_adjacents_in_known.append(right_query)
+
+            # within each model
+            for model in models:
+                bad = False
+                # if ((row, col), 1, 0) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
+                # if ((row, col), 0, 1) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
+                # if ((row, col), 0, 0) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
+                # if ((row, col), 1, 1) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
+                for square in model:
+                    # find all known squares adjacent to a square in the model. If any of these known squares contradicts a model, then the model must be false
+                    # for example, if our model says (2, 1) has a pit, but we have visited (2, 0) and seen that there is no breeze, then there is no way that
+                    # (2, 1) has a pit
+                    
+                    above = (square[0][0]-1, square[0][1])
+                    below = (square[0][0]+1, square[0][1])
+                    left = (square[0][0], square[0][1]-1)
+                    right = (square[0][0], square[0][1]+1)
+
+                    model_adjacents_in_known = [] # list of the squares we will have to check for breezes and stenches
+
+                    if (above, 0, 0) in self.known:
+                        model_adjacents_in_known.append(above)
+                    if (below, 0, 0) in self.known:
+                        model_adjacents_in_known.append(below)
+                    if (left, 0, 0) in self.known:
+                        model_adjacents_in_known.append(left)
+                    if (right, 0, 0) in self.known:
+                        model_adjacents_in_known.append(right)
+                    
+                    # now we iterate through sensor data to find whether there is are breezes or stenches in squares adjacent to the square in question
+                    for adjacent in model_adjacents_in_known:
+                        percept = self.map[adjacent[0]][adjacent[1]]
+
+                        condition = (square[1] == 0 and 'breeze' in percept) or (square[1] == 1 and 'breeze' not in percept) or (square[2] == 0 and 'stench' in percept) or (square[2] == 1 and 'stench' not in percept)
+
+                        if condition:
+                            # this if statement checks for the case where the model has a pit, but no breeze in an adjacent square or if the 
+                            # model has a Wumpus, but no stench in adjacent squares
+                            # if this is the case, we invalidate the model
+                            bad = True
+                    
+                    for adjacent in query_adjacents_in_known:
+                        percept = self.map[adjacent[0]][adjacent[1]]
+
+                        condition = (query[1] == 0 and 'breeze' in percept) or (query[1] == 1 and 'breeze' not in percept) or (query[2] == 0 and 'stench' in query) or (query[2] == 1 and 'stench' not in percept)
+
+                        if condition:
+                            # this if statement checks for the case where the model has a pit, but no breeze in an adjacent square or if the 
+                            # model has a Wumpus, but no stench in adjacent squares
+                            # if this is the case, we invalidate the model
+                            bad = True
+                    
+                    # now we do the same for squares adjacent to the query
+                    
+
+                    model_adjacents_in_known = [] # list of the squares we will have to check for breezes and stenches
+
+                    if (above, 0, 0) in self.known:
+                        model_adjacents_in_known.append(above)
+                    if (below, 0, 0) in self.known:
+                        model_adjacents_in_known.append(below)
+                    if (left, 0, 0) in self.known:
+                        model_adjacents_in_known.append(left)
+                    if (right, 0, 0) in self.known:
+                        model_adjacents_in_known.append(right)
+                    
+                    # now we iterate through sensor data to find whether there is are breezes or stenches in squares adjacent to the square in question
+                    for adjacent in model_adjacents_in_known:
+                        percept = self.map[adjacent[0]][adjacent[1]]
+
+                        if (square[1] == 0 and 'breeze' in percept) or (square[1] == 1 and 'breeze' not in percept) or (square[2] == 0 and 'stench' in percept) or (square[2] == 1 and 'stench' not in percept):
+                            # this if statement checks for the case where the model has a pit, but no breeze in an adjacent square or if the 
+                            # model has a Wumpus, but no stench in adjacent squares
+                            # if this is the case, we invalidate the model
+                            bad = True
+                
+                if bad == False:
+                    valid_models_dict[query].append(model)
+        
+        return valid_models_dict
+
     def calculateProbabilities(self):
-        fron = self.frontier
+        '''
+        here we need to remember that there are 4 variants of each query
+        if ((row, col), 1, 0) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
+        if ((row, col), 1, 1) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
+        if ((row, col), 0, 1) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
+        if ((row, col), 0, 0) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
+        '''
+        fron = copy.deepcopy(self.frontier)
         probabilities = {}      # this dict contains the probability of a pit for each square
 
-
+        print("Queries and valid models:")
         for query in self.frontier:
             fron.pop(fron.index(query)) # remove the query from the frontier
+            query_variants = [(query[0], 1, 0), (query[0], 1, 1), (query[0], 0, 1), (query[0], 0, 0)] # each of these impacts the probability calculation
 
-            models = enumerateModels(fron)
+            models = enumerateModels(fron)  # model enumeration
+            fron.append(query)
 
-    
+            validModels = self.checkModels(query_variants, models)
+            print(query)
+            for i in validModels:
+                print(i, validModels[i])
+
+            probabilities[query[0]] = self.probabilityFormula(query, validModels)
+            print("probabilities:", probabilities)
+
+            # now, we evaluate the generated models and leave only the ones
+            # that are possible given the observations (model-checking)
+
+    def probabilityFormula(self, query, validModels):
+        hasPit = (query[0], 1, 0)
+        noPit = (query[0], 0, 0)
+
+        probability = {}
+
+        prob = 0
+        
+        for square in validModels:
+            if square[0][1] == 1:
+                prob += 0.2
+            else:
+                prob += 0.8
+        probability['hasPit'] = prob * 0.2
+
+        prob = 0
+        for square in validModels:
+            if square[0][1] == 1:
+                prob += 0.2
+            else:
+                prob += 0.8
+        probability['noPit'] = prob * 0.8
+
+        return (probability['hasPit'], probability['noPit'])
+            
+
     # this function finds the squares adjacent to the current square
     # and appends them to self.frontier
     def updateFrontier(self):
@@ -134,21 +295,21 @@ class WWAgent:
         duplicates = [i for i in self.frontier if i in self.known]
 
         for duplicate in duplicates:
-            self.frontier.pop(self.frontier.index(duplicate)) # remove visited squares from frontier
+            self.frontier.pop(self.frontier.index(duplicate)) # remove visited squares from frontier 
         
-        above = (self.position[0]+1, self.position[1])
-        below = (self.position[0]-1, self.position[1])
+        above = (self.position[0]-1, self.position[1])
+        below = (self.position[0]+1, self.position[1])
         left = (self.position[0], self.position[1]-1)
         right = (self.position[0], self.position[1]+1)
         
         # check to see if the dimension are between 
         # 0 and self.max, otherwise, they aren't
         # valid dimensions
-        if above[0] < self.max:
+        if above[0] >= 0:
             temp.append(above)
-        if below[0] > -1:
+        if below[0] < self.max:
             temp.append(below)
-        if left[1] > -1:
+        if left[1] >= 0:
             temp.append(left)
         if right[1] < self.max:
             temp.append(right)
@@ -166,8 +327,8 @@ class WWAgent:
     # right now it is just a random choice agent
     
     def action(self):
-
         # test for controlled exit at end of successful gui episode
+
         if self.stopTheAgent:
             print("Agent has won this episode.")
             return 'exit' # will cause the episide to end
@@ -185,10 +346,6 @@ class WWAgent:
             # predict the effect of this
             self.calculateNextPosition(action)
 
-            # the frontier is updated here and then we check
-            # what the best move should be based on the new
-            # frontier
-            self.updateFrontier() # we only update frontier if the action is a move action
         else: # pick left or right 50%
             actionSelection=randint(0,1)
             if actionSelection>0:
@@ -208,15 +365,15 @@ class WWAgent:
 def enumerateModels(frontier):
     model_list = []
 
-    enums = product([1, 0], len(frontier)*2) # this will produce 2^(len(frontier)*2) models
+    model_configs = product([1, 0], repeat=len(frontier)*2) # this will produce 2^(len(frontier)*2) models
 
-    for enum in enums:  # for each model configuration
+    for model_config in model_configs:  # for each model configuration
         model = []
         pos = 0
         for square in frontier:
-            model.append(square[0], enum[pos], enum[pos+1]) # append the generated hasPit and hasWumpus
+            model.append((square[0], model_config[pos], model_config[pos+1])) # append the generated hasPit and hasWumpus
             pos = pos+2                                     # increment pos by 2
-        model_list.append(model)                            # append the model to the model list
+        model_list.append(model)                            # append the model to the model list -- each model appended is a possible frontier
 
     '''
     For a frontier with 2 squares, each element of enums will have 4 configurations slots
