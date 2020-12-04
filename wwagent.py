@@ -33,6 +33,7 @@ self.map is the agent's knowledge base (KB) and is what will be used for entailm
 from itertools import product # used to enumerate pit, wumpus, and gold configurations
 import copy
 from random import randint
+import numpy as np
 
 # This is the class that represents an agent
 
@@ -46,7 +47,7 @@ class WWAgent:
         self.facing = 'right'
         self.arrow = 1
         self.frontier = [((3, 1), False, False), ((2, 0), False, False)] # ((row, col), hasPit, hasWumpus). The 2 default frontier elements will always be the case
-        self.known = [((3,0), False, False)] # all the squares appended to this list will have values of False (otherwise the game would end).
+        self.known = set([((3,0), False, False)]) # all the squares appended to this list will have values of False (otherwise the game would end).
         self.percepts = (None, None, None, None, None)
         self.map = [[ self.percepts for i in range(self.max) ] for j in range(self.max)]
         self.probabilities = {}
@@ -63,12 +64,14 @@ class WWAgent:
         #[stench, breeze, glitter, bump, scream]
         if self.position[0] in range(self.max) and self.position[1] in range(self.max):
             self.map[ self.position[0]][self.position[1]]=self.percepts
+        
         self.updateFrontier()
+        '''
         print("-"*40)                                                                                           # ************************
         print("frontier:", self.frontier)
         print("-"*40)
         self.calculateProbabilities()
-
+        '''
         # puts the percept at the spot in the map where sensed
 
     # Since there is no percept for location, the agent has to predict
@@ -89,7 +92,7 @@ class WWAgent:
             self.position = (self.position[0], max(0,self.position[1]-1))
         
         if (self.position, False, False) not in self.known:
-                self.known.append((self.position, False, False)) # append the new position to known positions
+                self.known.add((self.position, False, False)) # append the new position to known positions
 
         return self.position
 
@@ -138,25 +141,25 @@ class WWAgent:
         if known == True:
             # find adjacents that are also in known
 
-            if (above, False, False) in self.known and (above, False, False) not in adjacents_list:
+            if (above, False, False) in self.known:
                 adjacents_list.add(above)
-            if (below, False, False) in self.known and (below, False, False) not in adjacents_list:
+            if (below, False, False) in self.known:
                 adjacents_list.add(below)
-            if (left, False, False) in self.known and (left, False, False) not in adjacents_list:
+            if (left, False, False) in self.known:
                 adjacents_list.add(left)
-            if (right, False, False) in self.known and (right, False, False) not in adjacents_list:
+            if (right, False, False) in self.known:
                 adjacents_list.add(right)
         else:
             # find adjacents that are in the frontier
             
             for sq in frontier_model:
-                if above in sq and sq not in adjacents_list:
+                if above in sq:
                     adjacents_list.add(sq)
-                if below in sq and sq not in adjacents_list:
+                if below in sq:
                     adjacents_list.add(sq)
-                if left in sq and sq not in adjacents_list:
+                if left in sq:
                     adjacents_list.add(sq)
-                if right in sq and sq not in adjacents_list:
+                if right in sq:
                     adjacents_list.add(sq)
         
         return adjacents_list
@@ -215,15 +218,6 @@ class WWAgent:
         return valid_models
 
     def calculateProbabilities(self):
-        '''
-        here we need to remember that there are 4 variants of each query
-        if ((row, col), True, False) there is a pit and no wumpus -- check that at least one adjacent square is in self.known, has breeze and has no stench
-        if ((row, col), True, True) there is a pit and a wumpus -- check that all adjacent squares that are in known have a breeze and a stench
-        if ((row, col), False, True) there is no pit and a wumpus -- check that at least one adjacent square is in self.known, has no breeze and has a stench
-        if ((row, col), False, False) there is no pit and no wumpus -- check that all adjacent squares that are in known have no breeze or stench
-        '''
-        fron = copy.deepcopy(self.frontier)
-        probabilities = {}      # this dict contains the probability of a pit for each square
 
         models = enumerateModels(self.frontier)
 
@@ -237,59 +231,41 @@ class WWAgent:
             print(i)
         print("-"*40)
         print()
-        print()
-    
-        '''
-        for query in self.frontier:
-            fron.pop(fron.index(query)) # remove the query from the frontier
-            query_variants = [(query[0], True, False), (query[0], True, True), (query[0], False, True), (query[0], False, False)] # each of these impacts the probability calculation
-
-            models = enumerateModels(fron)  # model enumeration
-            print("---------------------------------")
-            for i in models:
-                print(i)
-            print("---------------------------------")
-            print()
-
-            fron.append(query)
-
-            validModels = self.checkModels(query, models)
-            
-
-            #print(query)
-            #for i in validModels:
-            #    print(i, validModels[i])
-            
-
-            probabilities[query[0]] = self.probabilityFormula(query, validModels)
-        '''
-
-            # now, we evaluate the generated models and leave only the ones
-            # that are possible given the observations (model-checking)
-
-    def probabilityFormula(self, query, validModels):
-
-        probability = {}
-
-        prob = 0
+        print("-"*100)
         
-        for square in validModels:
-            if square[0][1] == True:
-                prob += 0.2
-            else:
-                prob += 0.8
-        probability['hasPit'] = prob * 0.2
+        return self.probabilityFormula(validModels)        # returns probability that a square is dangerous for each square in frontier
+    
 
-        prob = 0
-        for square in validModels:
-            if square[0][1] == True:
-                prob += 0.2
-            else:
-                prob += 0.8
-        probability['noPit'] = prob * 0.8
+    def probabilityFormula(self, valid_models):
+        # this is the function that actually calculates probabilities
+        square_danger = []
 
-        return (probability['hasPit'], probability['noPit'])
-            
+        #counts[valid_models[0][0]]
+        for i in range(len(valid_models[0])):
+            pit_count = 0
+            wumpus_count = 0
+
+            for model in valid_models:    
+                if model[i][1] == True:
+                    pit_count += 1
+                if model[i][2] == True:
+                    wumpus_count += 1
+
+            prob_pit = pit_count/len(valid_models)      # probability that there's a pit in square
+            prob_wump = wumpus_count/len(valid_models)  # probability that there's a wumpus in square
+            prob_danger = prob_pit+prob_wump-(prob_pit*prob_wump) # probability that there is a pit or that there is a wumpus p(A) + p(B) - p(A ^ B)
+
+            square_danger.append((model[i][0], prob_danger))
+        
+        # now we sort by probability of danger
+        square_danger = sorted(square_danger, key=lambda x: x[1])
+        
+        print('COUNTS')
+        for i in square_danger:
+            print(i)
+        
+        return square_danger
+
     # this function finds the squares adjacent to the current square
     # and appends them to self.frontier
     def updateFrontier(self):
@@ -327,15 +303,14 @@ class WWAgent:
         for square in temp:
             if (square, False, False) not in self.frontier and (square, False, False) not in self.known:
                 self.frontier.append((square, False, False))
-
-    # this is the function that will pick the next action of
-    # the agent. This is the main function that needs to be
-    # modified when you design your new intelligent agent
-    # right now it is just a random choice agent
     
     def action(self):
+        # this is the function that will pick the next action of
+        # the agent. This is the main function that needs to be
+        # modified when you design your new intelligent agent
+        # right now it is just a random choice agent
+        
         # test for controlled exit at end of successful gui episode
-
         if self.stopTheAgent:
             print("Agent has won this episode.")
             return 'exit' # will cause the episide to end
@@ -346,6 +321,64 @@ class WWAgent:
             self.stopTheAgent=True
             return 'grab'
         
+        print("-"*40)                                                                                           # ************************
+        print("frontier:", self.frontier)
+        print("-"*40)
+        danger_probabilities = self.calculateProbabilities()
+        
+        # first, we check to see if any of the best squares are adjaceent to the agent
+        isAdjacent = False
+        action = ""
+
+        for danger in danger_probabilities:
+            adjacents = self.find_adjacents(danger[0], self.frontier, True) # find squares in known that are adjacent to the chosen frontier square
+            # if the current square is adjacent to the frontier square and if the frontier square's danger is equal to the minimum danger,
+            # then that square is the next square
+            if self.position in adjacents and danger[1] <= danger_probabilities[0][1]:
+                next_square = danger[0]
+                isAdjacent = True
+                break
+        
+        if isAdjacent == False:
+            fringe = [[self.position, []]]
+            path = findPath(fringe, danger_probabilities[0][0], self.known)  # this function used breadth-first search to find a path to the desired square.
+        
+            next_square = path[1]
+            
+        if next_square[0] - self.position[0] == -1:     # next square is above
+            if self.facing != "up":
+                action = 'left'
+                self.calculateNextDirection(action)
+            else:
+                action = 'move'
+                self.calculateNextPosition(action)
+        if next_square[0] - self.position[0] == 1:      # next square is below
+            if self.facing != "down":
+                action = 'right'
+                self.calculateNextDirection(action)
+            else:
+                action = 'move'
+                self.calculateNextPosition(action)
+        if next_square[1] - self.position[1] == -1:     # next square is left
+            if self.facing != "left":
+                action = 'left'
+                self.calculateNextDirection(action)
+            else:
+                action = 'move'
+                self.calculateNextPosition(action)
+        if next_square[1] - self.position[1] == 1:      # next square is right
+            if self.facing != "right":
+                action = 'right'
+                self.calculateNextDirection(action)
+            else:
+                action = 'move'
+                self.calculateNextPosition(action)
+
+        return action    
+        # if next square (frontier) is adjacent to agent, turn to face that square
+        # if the agent is facing the square, move to that square
+        
+        '''
         # choose a random direction, and move          
         actionSelection = randint(0,1)
         if actionSelection>0: # there is an 50% chance of moving forward 
@@ -364,6 +397,7 @@ class WWAgent:
         print ("Random agent:",action, "-->",self.position[0],
                self.position[1], self.facing)
         return action
+        '''
 
 # this function enumerates all the possibilities of the frontier.
 # In other words, it will generate all the possible configurations
@@ -380,8 +414,8 @@ def enumerateModels(frontier):
             model.append((square[0], model_config[pos], model_config[pos+1])) # append the generated hasPit and hasWumpus
             pos = pos+2                                     # increment pos by 2
         model_list.append(model)                            # append the model to the model list -- each model appended is a possible frontier
-
     '''
+
     For a frontier with 2 squares, each element of enums will have 4 configurations slots
     each containing a True or False. For example, a possible configuration is: [False, True, True, True].
     The way to interpret this is that the first 2 numbers correspond to the following 
@@ -390,3 +424,46 @@ def enumerateModels(frontier):
     '''
 
     return model_list
+
+def successor(known, root, goal):
+    adjacents_list = []
+    square = root
+
+    above = (square[0]-1, square[1])
+    below = (square[0]+1, square[1])
+    left = (square[0], square[1]-1)
+    right = (square[0], square[1]+1)
+
+    if (above, False, False) in known or above == goal:
+        adjacents_list.append(above)
+    if (below, False, False) in known or below == goal:
+        adjacents_list.append(below)
+    if (left, False, False) in known or left == goal:
+        adjacents_list.append(left)
+    if (right, False, False) in known or right == goal:
+        adjacents_list.append(right)
+    
+    return adjacents_list
+
+def findPath(fringe, goal, known):
+    visited = []
+
+    while len(fringe) > 0:
+        rootnode = fringe.pop(0)
+        print("ROOTNODE", rootnode)
+        root = rootnode[0]
+
+        if root == goal:
+            return rootnode[1] + [goal]
+        
+        next_square_list = successor(known, root, goal)
+        visited.append(root)
+        fringe_square = [i[0] for i in fringe]
+
+        for square in next_square_list:
+            
+            if not square in fringe_square and not square in visited:
+                new_node = [square, rootnode[1] + [root]]
+                fringe.append(new_node)
+    
+    return "NO PATH TO " + str(goal)
