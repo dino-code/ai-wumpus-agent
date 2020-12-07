@@ -53,25 +53,25 @@ class WWAgent:
         self.probabilities = {}
         self.models = []
         print("New agent created")
-
+    
     # Add the latest percepts to list of percepts received so far
     # This function is called by the wumpus simulation and will
     # update the sensory data. The sensor data is placed into a
     # map structured KB for later use
-    
     def update(self, percept):
         self.percepts=percept
         #[stench, breeze, glitter, bump, scream]
+
+        # puts the percept at the spot in the map where sensed
         if self.position[0] in range(self.max) and self.position[1] in range(self.max):
             self.map[ self.position[0]][self.position[1]]=self.percepts
         
+        # update the squares seen in the frontier
         self.updateFrontier()
-        # puts the percept at the spot in the map where sensed
 
     # Since there is no percept for location, the agent has to predict
     # what location it is in based on the direction it was facing
     # when it moved
-
     def calculateNextPosition(self,action):
         # I had to reverse the positions because in CS, the first number means the row and
         # the second number means the column (row, column)
@@ -93,7 +93,6 @@ class WWAgent:
     # and the same is true for the direction the agent is facing, it also
     # needs to be calculated based on whether the agent turned left/right
     # and what direction it was facing when it did
-    
     def calculateNextDirection(self,action):
         if self.facing=='up':
             if action=='left':
@@ -215,16 +214,18 @@ class WWAgent:
 
         return valid_models
 
+    # calls enumerateModels, checkModels, and probabilityFormula
+    # and returns the danger probability for each square in the 
+    # frontier
     def calculateProbabilities(self):
-
         models = enumerateModels(self.frontier)
 
         validModels = self.checkModels(models)
         
         return self.probabilityFormula(validModels)        # returns probability that a square is dangerous for each square in frontier
     
+    # this is the function that actually calculates probabilities
     def probabilityFormula(self, valid_models):
-        # this is the function that actually calculates probabilities
         square_danger = []
 
         #counts[valid_models[0][0]]
@@ -292,12 +293,9 @@ class WWAgent:
             if (square, False, False) not in self.frontier and (square, False, False) not in self.known:
                 self.frontier.append((square, False, False))
     
-    def action(self):
-        # this is the function that will pick the next action of
-        # the agent. This is the main function that needs to be
-        # modified when you design your new intelligent agent
-        # right now it is just a random choice agent
-        
+    # this is the function that will pick the next action of
+    # the agent
+    def action(self): 
         # test for controlled exit at end of successful gui episode
         if self.stopTheAgent:
             print("Agent has won this episode.")
@@ -363,7 +361,7 @@ class WWAgent:
 
 # this function enumerates all the possibilities of the frontier.
 # In other words, it will generate all the possible configurations
-# of the squares within the frontier.
+# of the squares within the frontier
 def enumerateModels(frontier):
     model_list = []
 
@@ -387,6 +385,7 @@ def enumerateModels(frontier):
 
     return model_list
 
+# finds the successors from each known square
 def successor(known, root, goal):
     adjacents_list = []
     square = root
@@ -407,6 +406,8 @@ def successor(known, root, goal):
     
     return adjacents_list
 
+# performs breadth-first search to find a path through known
+# squares to the goal square
 def findPath(fringe, goal, known):
     visited = []
 
