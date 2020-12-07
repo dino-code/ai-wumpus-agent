@@ -66,12 +66,6 @@ class WWAgent:
             self.map[ self.position[0]][self.position[1]]=self.percepts
         
         self.updateFrontier()
-        '''
-        print("-"*40)                                                                                           # ************************
-        print("frontier:", self.frontier)
-        print("-"*40)
-        self.calculateProbabilities()
-        '''
         # puts the percept at the spot in the map where sensed
 
     # Since there is no percept for location, the agent has to predict
@@ -121,7 +115,6 @@ class WWAgent:
                 self.facing = 'down'
             else:
                 self.facing = 'up'
-
 
     # returns a list of squares that are adjacent to the given list of squares
     # if known == True, find squares within self.known that are adjacent
@@ -174,7 +167,10 @@ class WWAgent:
 
         for model in models:
             isValid = True           # we begin by assuming the model is valid
-            known_border = set([])   # these are the known squares that the frontier borders. Set because we don't need duplicate values and order doesn't matter
+            
+            # known squares that the frontier borders. 
+            # Set bc we don't need duplicate values and order doesn't matter
+            known_border = set([])   
         
             for frontier_square in model:
                 frontier_square_adjacents = self.find_adjacents(frontier_square, model, True)
@@ -201,7 +197,9 @@ class WWAgent:
                 
                 # here we check conditions for determining whether the model is correct
                 if "breeze" in percept and pit_count == 0:
-                    # if there is a breeze in the percepts but none of the frontier squares adjacent to the square with the breeze have a pit, then we invalidate the model
+                    # if there is a breeze in the percepts but none of the 
+                    # frontier squares adjacent to the square with the breeze have a pit, 
+                    # then we invalidate the model
                     isValid = False
                 if "breeze" not in percept and pit_count > 0:
                     isValid = False
@@ -221,21 +219,10 @@ class WWAgent:
 
         models = enumerateModels(self.frontier)
 
-        print("models", len(models))
-        
-        print("-"*40)
         validModels = self.checkModels(models)
-        print("Known", self.known)
-        print("validModels")
-        for i in validModels:
-            print(i)
-        print("-"*40)
-        print()
-        print("-"*100)
         
         return self.probabilityFormula(validModels)        # returns probability that a square is dangerous for each square in frontier
     
-
     def probabilityFormula(self, valid_models):
         # this is the function that actually calculates probabilities
         square_danger = []
@@ -251,18 +238,19 @@ class WWAgent:
                 if model[i][2] == True:
                     wumpus_count += 1
 
-            prob_pit = pit_count/len(valid_models)      # probability that there's a pit in square
-            prob_wump = wumpus_count/len(valid_models)  # probability that there's a wumpus in square
-            prob_danger = prob_pit+prob_wump-(prob_pit*prob_wump) # probability that there is a pit or that there is a wumpus p(A) + p(B) - p(A ^ B)
+            # probability that there's a pit in square
+            prob_pit = pit_count/len(valid_models) 
+
+            # probability that there's a wumpus in square     
+            prob_wump = wumpus_count/len(valid_models) 
+
+            # probability that there is a pit or that there is a wumpus p(A) + p(B) - p(A ^ B)
+            prob_danger = prob_pit+prob_wump-(prob_pit*prob_wump) 
 
             square_danger.append((model[i][0], prob_danger))
         
         # now we sort by probability of danger
         square_danger = sorted(square_danger, key=lambda x: x[1])
-        
-        print('COUNTS')
-        for i in square_danger:
-            print(i)
         
         return square_danger
 
@@ -321,9 +309,6 @@ class WWAgent:
             self.stopTheAgent=True
             return 'grab'
         
-        print("-"*40)                                                                                           # ************************
-        print("frontier:", self.frontier)
-        print("-"*40)
         danger_probabilities = self.calculateProbabilities()
         
         # first, we check to see if any of the best squares are adjaceent to the agent
@@ -375,29 +360,6 @@ class WWAgent:
                 self.calculateNextPosition(action)
 
         return action    
-        # if next square (frontier) is adjacent to agent, turn to face that square
-        # if the agent is facing the square, move to that square
-        
-        '''
-        # choose a random direction, and move          
-        actionSelection = randint(0,1)
-        if actionSelection>0: # there is an 50% chance of moving forward 
-            action = 'move'
-            # predict the effect of this
-            self.calculateNextPosition(action)
-
-        else: # pick left or right 50%
-            actionSelection=randint(0,1)
-            if actionSelection>0:
-                action = 'left'
-            else:
-                action='right'
-            # predict the effect of this
-            self.calculateNextDirection(action)
-        print ("Random agent:",action, "-->",self.position[0],
-               self.position[1], self.facing)
-        return action
-        '''
 
 # this function enumerates all the possibilities of the frontier.
 # In other words, it will generate all the possible configurations
