@@ -365,7 +365,7 @@ class WWAgent:
 def enumerateModels(frontier):
     model_list = []
 
-    model_configs = product([True, False], repeat=len(frontier)*2) # this will produce 2^(len(frontier)*2) models
+    model_configs = product([True, False], repeat=len(frontier)*2) # this will produce 4^(len(frontier)) models
 
     for model_config in model_configs:  # for each model configuration
         model = []
@@ -374,8 +374,8 @@ def enumerateModels(frontier):
             model.append((square[0], model_config[pos], model_config[pos+1])) # append the generated hasPit and hasWumpus
             pos = pos+2                                     # increment pos by 2
         model_list.append(model)                            # append the model to the model list -- each model appended is a possible frontier
+    
     '''
-
     For a frontier with 2 squares, each element of enums will have 4 configurations slots
     each containing a True or False. For example, a possible configuration is: [False, True, True, True].
     The way to interpret this is that the first 2 numbers correspond to the following 
@@ -413,7 +413,6 @@ def findPath(fringe, goal, known):
 
     while len(fringe) > 0:
         rootnode = fringe.pop(0)
-        print("ROOTNODE", rootnode)
         root = rootnode[0]
 
         if root == goal:
